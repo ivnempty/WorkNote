@@ -1,1 +1,2 @@
-This is a static html pages, please visit it from https://ivnempty.github.com/WorkNote
+There are static html pages in this repository.
+For better experience, please visit it from https://ivnempty.github.com/WorkNote
