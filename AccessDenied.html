@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Fix for access denied to administrative shares</title>
+</head>
+
+<body>
+	<div>
+		<p>
+		Under certain circumstances, you cannot connect to administrative shares (e.g. C$) on
+		remote computers, even though you use the right credentials. Accessing a normal
+		(i.e. non-administrative) share works flawlessly, though.
+		</p>
+
+		<h3>Problem</h3>
+
+		<p>
+		In this situation you get the following error when trying to connect to the admin share in Explorer:
+		</p>
+
+		<p><img width=572 height=214 alt="" src="images/image001.jpg"></p>
+
+		<p>The message hints at multiple connections, but that is misleading.</p>
+
+		<p>When you try to connect to the admin share on the command line, you get a different error message:</p>
+
+		<p style="padding: 10px 20px; background-color:lightgrey;">
+		C:\&gt;&nbsp;net use \\192.168.175.129\c$ /user:win7-2\admin *<br />
+		Type the password for \\192.168.175.129\c$:<br />
+		System error 5 has occurred.<br />
+		&nbsp;<br />
+		Access is denied.
+		</p>
+
+		<h3>Solution</h3>
+
+		<p>
+		As described in <a href="http://support.microsoft.com/kb/951016">MS KB article 951916</a>, 
+		Microsoft introduced as part of UAC a little known feature called "UAC remote restrictions". 
+		It filters the access token for connections made with local user accounts or Microsoft accounts (the
+		latter typically have the format <i>MicrosoftAccount\EMailAddress</i>). In
+		other words, it removes the SID for "Administrators". Connections made with
+		domain accounts remain unchanged.</p>
+
+		<p>
+		From KB951016: <br /><br />
+		If the user wants to administer the workstation with a Security Account Manager (SAM)
+		account, the user must interactively log on to the computer that is to be
+		administered with Remote Assistance or Remote Desktop, if these services are available.
+		</p>
+
+		<p>
+		One may like this or not, the solution is luckily pretty simple. UAC remote restrictions can
+		be disabled by setting the registry value LocalAccountTokenFilterPolicy to 1:
+		</p>
+
+		<p style="padding: 10px 20px; background-color:lightgrey;">
+		Key:&nbsp;&nbsp; HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System<br />
+		Value: LocalAccountTokenFilterPolicy<br />
+		Data:&nbsp; 1 (to disable, 0 enables filtering)<br />
+		Type:&nbsp; REG_DWORD (32-bit)<br />
+		</p>
+
+		<p>
+		After a reboot access tokens from remote connections are not filtered any more. On
+		Windows 8 and Windows 10 the reboot is not even required any more.
+		</p>
+	</div>
+</body>
+</html>

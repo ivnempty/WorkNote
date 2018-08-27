@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Fix for access denied to administrative shares</title>
+</head>
+
+<body>
+
+<div>
+
+<p><b><span>New and Enhanced Functions in T-SQL</span></b></p>
+
+<p><b><span>&nbsp;</span></b></p>
+
+<p>Contents</p>
+
+<p><a>SQL Server 2016.</span><span> </span><span>2</span></a></p>
+
+<p><a><span>SQL
+Server 2012</span><span>. </span><span>5</span></a></p>
+
+<p>&nbsp;</p>
+
+<p><b><span>&nbsp;</span></b></p>
+
+<b><span><br>
+</span></b>
+
+<p><span>&nbsp;</span></p>
+
+<h1><a><span>SQL Server 2016.</span></a></h1>
+
+<p><b><span>DROP IF
+EXISTS</span></b></p>
+
+<p><span>One of the
+handiest T-SQL enhancements with SQL Server 2016 is the new DROP IF EXITS
+statement. It lets you check if an object exists before dropping it enabling
+you to skip wiring all those IF EXISTS blocks that we all write in out T-SQL
+scripts. You can see an example below.</span></p>
+
+<p><span>DROP TABLE IF EXISTS [dbo].[MyTable];</span></p>
+
+<p><b><span>STRING_SPLIT
+Function</span></b></p>
+
+<p><span>STRING_SPLIT
+is another handy new function that makes it easy to parse strings based on a
+delimiter. The string can be a varchar, nvarchar, char, or nchar data type.</span></p>
+
+<p><span>DECLARE @string varchar(100) = 'Richard, Mike, Mark'</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>SELECT value FROM string_split(@string, ',')</span></p>
+
+<p><b><span>TRUNCATE
+TABLE with PARTITION</span></b></p>
+
+<p><span>The
+TRUNCATE TABLE statement in SQL Server 2016 supports the truncation of specific
+partitions which can simplify&nbsp;maintenance on large partitioned tables. The
+TRANCATE TABLE statement is faster than deleting the rows from partitions using
+the DELETE statement. You can the enhanced TRANCATE TABLE statement below.</span></p>
+
+<p><span>TRUNCATE TABLE dbo.myTable WITH (PARTITIONS (1, 6 TO 8));</span></p>
+
+<p><b><span>FOR SYSTEM_TIME
+Clause</span></b></p>
+
+<p><span>The FOR
+SYSTEM_TIME clause was introduced to support the new temporal tables feature.
+Temporal tables automatically track a table¡¦s history. And the new clauses was
+added to enable querying a temporal table¡¦s history. The follow example shows
+how you can use the new FOR SYSTEM_TIME clause.</span></p>
+
+<p><span>SELECT * FROM Employee FOR SYSTEM_TIME&nbsp;&nbsp; </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BETWEEN '2014-01-01
+00:00:00.0000000' AND '2015-01-01 00:00:00.0000000'&nbsp;&nbsp;&nbsp; WHERE
+EmployeeID = 1000 ORDER BY ValidFrom; </span></p>
+
+<p><b><span>FOR JSON
+Clause</span></b></p>
+
+<p><span>Likewise,
+the FOR JSON clause was add to enable you to convert tabular data to JSON.
+Unlike XML which has a native data type, the new JSON support is enabled by
+using the NVARCHAR data type. You can see an example of using the new FOR JSON
+clause in the following listing:</span></p>
+
+<p><span>SELECT object_id, name FROM sys.tables FOR JSON PATH</span></p>
+
+<p><b><span>JSON
+Functions</span></b></p>
+
+<p><span>¡P<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><span>ISJSON -- The ISJSON function tests whether a string contains
+valid JSON.</span></p>
+
+<p><span>¡P<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><span>JSON_VALUE -- The JSON_VALUE function extracts a scalar value
+from a JSON string.</span></p>
+
+<p><span>¡P<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><span>JSON_QUERY -- The JSON_QUERY function extracts an object or an
+array from a JSON string.</span></p>
+
+<p><span>¡P<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><span>JSON_MODIFY -- The JSON_MODIFY function updates the value of a
+property in a JSON string and returns the updated JSON string.</span></p>
+
+<p><b><span>OPENJON
+Function</span></b></p>
+
+<p><span>The
+OPENJSON table-value function (TVF) queries JSON text and can locate an array
+of JSON objects or iterate through the elements of array and generate a rowset
+from the results. You can see an example of using the OPENJSON function below.</span></p>
+
+<p><span>DECLARE @JSON NVARCHAR(100)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>SET @json = N'[ null, &quot;string&quot;, 1, [true, false],
+[&quot;a&quot;,&quot;b&quot;,&quot;c&quot;],
+{&quot;obj1&quot;:&quot;obj2&quot;} ]'; </span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>SELECT * FROM OPENJSON( @json ) </span></p>
+
+<p><b><span>FORMATMESSAGE
+Function</span></b></p>
+
+<p><span>The
+FORMATMESSAGE function as also been enhanced to enable supply your own string
+values. The previous version constructed a message from strings located in
+sys.messages. The following listing illustrates the new FOMRMESSAGE
+capabilities.</span></p>
+
+<p><span>SELECT FORMATMESSAGE('This is the %s and this is the %s.',
+'variable1', 'variable2') AS Result; </span></p>
+
+<p><b><span>Stored
+procedure sp_execute_external_script to execute R scripts</span></b></p>
+
+<p><span>To help
+enable R support in SQL Server 2016 Microsoft added the
+sp_Execute_externl_script stored procedure that enables you to execute R
+scripts from T-SQL running n SQL Server. You can see a simple example of
+executing R from T-SQL in the following listing.</span></p>
+
+<p><span>EXEC sp_execute_external_script&nbsp; @language =N'R',&nbsp;&nbsp;
+</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>@script=N'OutputDataSet&lt;-InputDataSet',&nbsp;&nbsp;&nbsp; </span></p>
+
+<p><span>@input_data_1 =N'select 1 as hello'&nbsp;&nbsp; </span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>WITH RESULT SETS (([hello] INT not null));&nbsp;&nbsp; </span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>GO</span></p>
+
+<span><br>
+</span>
+
+<p><span>&nbsp;</span></p>
+
+<h1><a><span>SQL Server 2012</span></a></h1>
+
+<p><b><u><span>Conversion
+and Parsing</span></u></b></p>
+
+<p><span>New
+functions in this category: TRY_CONVERT, PARSE and TRY_PARSE.</span></p>
+
+<p><b><span>TRY_CONVERT</span></b></p>
+
+<p><span>The
+TRY_CONVERT function is one that many developers have been hoping to get for a
+long time. It works pretty much like the existing CONVERT function, only when
+the input value isn¡¦t convertible, instead of generating an error, the function
+returns a NULL. Here¡¦s an example, followed by its output:</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>SELECT TRY_CONVERT(INT, 100) AS try1, TRY_CONVERT(INT, 'abc') AS
+try2;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>try1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; try2</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>----------- -----------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; NULL</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>Like the
+CONVERT function, also TRY_CONVERT supports a third&nbsp;style argument where
+relevant.</span></p>
+
+<p><span>One
+classic case where this function can be useful is in dynamic schema scenarios.
+Each row represents a single entity, attribute, value (EAV), where the values
+are stored as character strings. But even though the values are all stored in a
+character string column, each attribute conceptually can have a different type
+(number, data, etc.). You have the conceptual type of the value stored in its
+own column (call it thetype). Suppose you attempt to filter only attributes
+representing integers, convert to an INT type, and then do something with the result.
+So your filter looks something like this:</span></p>
+
+<p><span>WHERE thetype = 'INT' AND CAST(val AS INT) &gt; 10</span></p>
+
+<p><span>With
+TRY_CONVERT you can easily avoid such failures using the following form:</span></p>
+
+<p><span>WHERE thetype = 'INT' AND TRY_CONVERT(INT&lt; val) &gt; 10</span></p>
+
+<p><span>Would be
+nice if SQL Server added in the future also a TRY_CAST function where the style
+isn¡¦t relevant; perhaps even a more general TRY_THIS function that would work
+with any expression that generates a trappable error. For example, why not
+allow TRY_THIS(col1 / col2), and in case of an error like divide-by-zero simply
+return a NULL?</span></p>
+
+<p><b><span>PARSE</span></b></p>
+
+<p><span>The PARSE
+function in essence does a conversion of an input string to the target type,
+but unlike CAST and CONVERT, it supports an optional USING clause indicating
+the culture. The culture is any valid culture supported by the .NET framework.
+If a culture isn¡¦t specified, SQL Server will rely on the current session¡¦s
+effective language. One of the benefits in this function when an explicit
+culture is used is that it allows you to phrase the values in a form that is
+based on your culture¡¦s conventions, without worrying about the language of the
+user running your code.</span></p>
+
+<p><span>Here¡¦s an
+example parsing strings as dates, in one case using US English culture, and in
+the other, Japanese:</span></p>
+
+<p><span>SELECT PARSE('7/17/2011' AS DATE USING 'en-US') AS dt1,
+PARSE('2011/7/17' AS DATE USING 'ja-JP') AS dt2;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>dt1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; dt2</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>---------- ----------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>2011-07-17 2011-07-17</span></p>
+
+<p><b><span>TRY_PARSE</span></b></p>
+
+<p><span>The
+TRY_PARSE to PARSE is like TRY_CONVERT is to CONVERT; namely, TRY_PARSE does
+the same as PARSE, only when the input isn¡¦t converted to the target type,
+instead of generating an error, the function returns a NULL. For example, the
+following invocation of PARSE fails:</span></p>
+
+<p><span>SELECT PARSE('7/17/11' AS DATE USING 'ja-JP') AS dt;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>Msg 9819, Level 16, State 1, Line 1</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>Error converting string value '7/17/11' into data type date using
+culture 'ja-JP'.</span></p>
+
+<p><span>A similar
+attempt with TRY_PARSE returns a NULL:</span></p>
+
+<p><span>SELECT TRY_PARSE('7/17/11' AS DATE USING 'ja-JP') AS dt;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>dt</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>----------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>NULL</span></p>
+
+<p><b><u><span>Date and
+Time</span></u></b></p>
+
+<p><span>New
+functions in this category: EOMONTH,&nbsp; DATEFROMPARTS, DATETIME2FROMPARTS,
+DATETIMEFROMPARTS, DATETIMEOFFSETFROMPARTS, SMALLDATETIMEFROMPARTS and
+TIMEFROMPARTS.</span></p>
+
+<p><b><span>EOMONTH</span></b></p>
+
+<p><span>The
+EOMONTH function returns the end of month date corresponding to the input date
+and time value, with the time set to midnight, retaining the time zone if it
+exists. Here¡¦s an example I ran on September 28</span><sup><span>th</span></sup><span>, 2011,
+invoking EOMONTH with SYSDATETIME as input:</span></p>
+
+<p><span>SELECT EOMONTH(SYSDATETIME()) AS endofmonth;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>endofmonth</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>----------------------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>2011-09-30 00:00:00.00</span></p>
+
+<p><span>If the
+input type is one of the supported date and time datatypes, the type of the
+output is that of the input. Otherwise, as long as the input is convertible to
+a date and time type, the type of the output is DATETIME2(7).</span></p>
+
+<p><span>It¡¦s
+important to note is that the function doesn¡¦t return the last possible point
+in time for the respective month based on the type of the input, rather
+midnight of the last day of the month. As long as the values stored in the data
+have only the date, or use only midnight, it is actually quite convenient to
+use this function. As an example, the following query returns orders placed on
+the last day of the month:</span></p>
+
+<p><span>SELECT orderid, orderdate, custid, empid</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>FROM Sales.Orders</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>WHERE orderdate = EOMONTH(orderdate);</span></p>
+
+<p><span>Here I¡¦m
+relying on the fact that all order dates are stored with midnight in the time.
+If that¡¦s not a guarantee, and the time can be other than midnight, to address
+the task correctly you would need to express the filter as a range, like so:</span></p>
+
+<p><span>SELECT orderid, orderdate, custid, empid</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>FROM Sales.Orders</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>WHERE orderdate &gt;= EOMONTH(orderdate)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp; AND orderdate &lt; DATEADD(day, 1, EOMONTH(orderdate));</span></p>
+
+<p><span>Surprisingly,
+SQL Server Denali CTP3 doesn¡¦t also support functions for end of other periods
+(e.g., quarter, year), or the beginning of any period. For now, you have to
+roll your own. This reminds me of an amusing, though very practical,
+suggestion, by my friend and colleague Gianluca Hotz when he learned that
+there¡¦s no support for other similar functions. He suggested creating a function
+called ENDOFTIME that will accept the period (e.g., MONTH, QUARTER, YEAR) as
+another input, and return the end of that period. Similarly a function called
+BEGINNINGOFTIME or STARTOFTIME could accept a value and a period, and return
+the beginning of that period.</span></p>
+
+<p><b><span>%FROMPARTS</span></b></p>
+
+<p><span>For each
+date and time data type, SQL Server Denali provides a FROMPARTS function that
+allows constructing a value of this type from integer parts. This is useful in
+general, but also important for migrations from environments like Excel, Access
+and others that support such functionality.</span></p>
+
+<p><span>Here¡¦s
+sample code constructing a value of each of the date and time types:</span></p>
+
+<p><span>SELECT</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp; DATEFROMPARTS(2012, 02, 12)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; AS DATE_FROMPARTS,</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp; DATETIME2FROMPARTS(2012, 02, 12, 13, 30, 5, 1, 7)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; AS DATETIME2_FROMPARTS,</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp; DATETIMEFROMPARTS(2012, 02, 12, 13, 30, 5, 997)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; AS DATETIME_FROMPARTS,</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp; DATETIMEOFFSETFROMPARTS(2012, 02, 12, 13, 30, 5, 1, -8, 0,
+7)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; AS DATETIMEOFFSET_FROMPARTS,</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp; SMALLDATETIMEFROMPARTS(2012, 02, 12, 13, 30)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; AS SMALLDATETIME_FROMPARTS,</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp; TIMEFROMPARTS(13, 30, 5, 1, 7)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; AS TIME_FROMPARTS;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>DATE_FROMPARTS DATETIME2_FROMPARTS&nbsp;&nbsp;&nbsp;
+DATETIME_FROMPARTS&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>-------------- ---------------------- -----------------------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>2012-02-12&nbsp;&nbsp;&nbsp;&nbsp; 2012-02-12 13:30:05.00
+2012-02-12 13:30:05.997</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>DATETIMEOFFSET_FROMPARTS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SMALLDATETIME_FROMPARTS TIME_FROMPARTS</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>---------------------------------- -----------------------
+----------------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>2012-02-12 13:30:05.0000001 -08:00 2012-02-12
+13:30:00&nbsp;&nbsp;&nbsp;&nbsp; 13:30:05.0000001</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>DATE_FROMPARTS
+DATETIME2_FROMPARTS&nbsp;&nbsp;&nbsp;
+DATETIME_FROMPARTS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>
+
+<p><span>--------------
+---------------------- -----------------------</span></p>
+
+<p><span>2012-02-12&nbsp;&nbsp;&nbsp;&nbsp;
+2012-02-12 13:30:05.00 2012-02-12 13:30:05.997</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>DATETIMEOFFSET_FROMPARTS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SMALLDATETIME_FROMPARTS TIME_FROMPARTS</span></p>
+
+<p><span>----------------------------------
+----------------------- ----------------</span></p>
+
+<p><span>2012-02-12
+13:30:05.0000001 -08:00 2012-02-12 13:30:00&nbsp;&nbsp;&nbsp;&nbsp;
+13:30:05.0000001</span></p>
+
+<p><b><u><span>Logical</span></u></b></p>
+
+<p><span>Functions
+in this category: CHOOSE and IIF.</span></p>
+
+<p><span>The IIF
+and CHOOSE functions are another pair of functions that Denali supports to
+allow easier migration from environments running Access.</span></p>
+
+<p><b><span>CHOOSE</span></b></p>
+
+<p><span>The CHOOSE
+function accepts an integer input followed by a list of values of any data
+type, and returns as output the value from the list in the position indicated
+by the first input. Here¡¦s an example for using the function:</span></p>
+
+<p><span>SELECT CHOOSE(1, 'a', 'b', 'c') AS first, CHOOSE(2, 'a', 'b', 'c')
+AS second;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>first second</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>----- ------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>a&nbsp;&nbsp;&nbsp;&nbsp; b</span></p>
+
+<p><span>Of course
+you can implement similar logic very easily using the standard CASE expression,
+but as mentioned, the point is making migrations from Access smoother.</span></p>
+
+<p><b><span>IIF</span></b></p>
+
+<p><span>The IIF
+function is another function Access supports. It accepts as first input a
+predicate, as second input an expression to return in case the predicate is
+true, and as third input an expression to return in case the input is false or
+unknown. Here¡¦s an example for using the function:</span></p>
+
+<p><span>SELECT IIF(1 = 2, 'a', 'b') AS iif_result;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>iif_result</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>----------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>b</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>Just like
+with CHOOSE, it¡¦s very simple to implement the IIF logic with a standard CASE
+expression, but the point was making Access migrations easier.</span></p>
+
+<p><b><u><span>String
+Manipulation</span></u></b></p>
+
+<p><span>New
+functions in this category: CONCAT and FORMAT.</span></p>
+
+<p><b><span>CONCAT</span></b></p>
+
+<p><span>The CONCAT
+function concatenates the input values into a single result string. If you¡¦re
+wondering what¡¦s the reason for adding such a function when T-SQL already has a
+concatenation operator (+), there are two main reasons:</span></p>
+
+<p><span>1. The
+concatenation operator + yields a NULL on NULL input. The CONCAT function
+converts NULL inputs to empty strings before concatenation. Of course you can
+get by using the COLAESCE function, replacing a NULL input with an empty
+string, but this makes the code messy.</span></p>
+
+<p><span>2. Other
+platforms support the CONCAT function, and adding such support in SQL Server
+makes migration from those platforms easier.</span></p>
+
+<p><span>As an
+example, consider the location attributes country, region and city, of
+customers. The region attribute simply isn¡¦t applicable in some locations, in
+which case it is set to NULL. You want to generate a single string of all three
+location attributes, separating the applicable ones by commas. With the CONCAT
+function it¡¦s very simple:</span></p>
+
+<p><span>SELECT custid, city, region, country,</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp; CONCAT(city, ', ' + region, ', ' + country) AS location</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>FROM Sales.Customers</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>WHERE custid &gt; 85;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>custid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+city&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+region&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+country&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; location</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>----------- --------------- --------------- ---------------
+---------------------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>86&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Stuttgart&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Germany&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Stuttgart, Germany</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>87&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Oulu&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Finland&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Oulu, Finland</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>88&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Resende&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Brazil&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Resende, SP,
+Brazil</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>89&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Seattle&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+WA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+USA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Seattle, WA, USA</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>90&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Helsinki&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Finland&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Helsinki, Finland</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>91&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Warszawa&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+NULL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Poland&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Warszawa, Poland</span></p>
+
+<p><span>Notice
+that when the region attribute was applicable it was made part of the result
+string, and when it wasn¡¦t, the NULL was simply replaced with an empty string.</span></p>
+
+<p><b><span>FORMAT</span></b></p>
+
+<p><span>The FORMAT
+function allows you to format an input value to a character string based on a
+.NET format string. You can optionally indicate a culture when relevant. As an
+example, the following code formats the result of the GETDATE() function using
+the format string 'd' (meaning, short date pattern), in one case using US
+English culture, and in another Japanese:</span></p>
+
+<p><span>SELECT FORMAT(GETDATE(), 'd', 'en-US') AS us, FORMAT(GETDATE(),
+'d', 'ja-JP') AS jp</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>us&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;jp</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>----------- ------------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>9/28/2011&nbsp;&nbsp; 2011/09/28</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>This
+function allows a lot of flexibility in formatting inputs. For example, the
+following code formats product IDs as 10-digit strings with leading zeros:</span></p>
+
+<p><span>SELECT FORMAT(productid, '0000000000') AS strproductid,
+productname</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>FROM Production.Products;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>strproductid&nbsp; productname</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>------------- --------------</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>0000000058&nbsp;&nbsp;&nbsp; Product ACRVI</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>0000000009&nbsp;&nbsp;&nbsp; Product AOZBW</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>0000000051&nbsp;&nbsp;&nbsp; Product APITJ</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>0000000045&nbsp;&nbsp;&nbsp; Product AQOKR</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>0000000033&nbsp;&nbsp;&nbsp; Product ASTMN</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>...</span></p>
+
+<p><span>Note,
+though, that the function relies on .NET for the purposes of formatting, which
+has overhead. Compared, for example, with functions like STR, the FORMAT
+function is much slower.</span></p>
+
+</div>
+
+</body>
+
+</html>

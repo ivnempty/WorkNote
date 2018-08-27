@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Generate And Bind HTTP Cert With OpenSSL</title>
+</head>
+
+<body>
+	<div>
+		<p>
+			<b>OpenSSL Generate Self Signed Certification with DNS</b><br />
+			<ol>
+				<li>Config openssl.cnf, set DNS domain name</li>
+				<li>Gen cert request file: <br />
+				openssl req -new -newkey rsa:2048 -sha256 -nodes -out keypair.csr -keyout keypair.key -config ../openssl.cnf</li>
+				<li>Check cert request file: <br />
+				openssl req -text -noout -in keypair.csr</li>
+				<li>Gen cert: <br />
+				openssl x509 -req -sha256 -days 3650 -in keypair.csr -signkey keypair.key -out keypair.crt -extensions v3_req -extfile ../openssl.cnf</li>
+				<li>Convert cert to P12 format: <br />
+				openssl pkcs12 -export -in keypair.crt -inkey keypair.key -out keypair_signed.p12</li>
+			</ol>
+		</p>
+
+		<br />
+
+		<p>
+			<b>Bind SSL Cert to Windows Port</b><br />
+			<ol>
+				<li>Open mmc.msc, add cert to Local Computer > Personal</li>
+				<li>Open the cert, get the thumbprint, and remove <space></li>
+				<li>Assign port with ssl (run as Admin):<br />
+				netsh http add sslcert ipport=0.0.0.0:443 certhash=28896b721adc8480f0a3ead96ead6e0d9b31b239 appid={214124cd-d05b-4309-9af9-9caa44b2b74a} clientcertnegotiation=enable</li>
+			</ol>
+		</p>
+		
+		<br />
+		
+		<p>
+			<b>Remove SSL Cert</b><br />
+			<ul>
+				<li>netsh http delete sslcert ipport=0.0.0.0:443</li>
+			</ul>
+		</p>
+	</div>
+</body>
+</html>

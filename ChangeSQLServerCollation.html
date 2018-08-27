@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Change MSSQL Collation After Installation</title>
+</head>
+
+<body>
+	<div>
+		<p><b>Changing SQL Server Collation After Installation</b></p>
+
+		<p><b>Problem</b></p>
+
+		<p>
+		In some scenarios we can find different SQL Server collations 
+		between the server instance and its databases.&nbsp; Sometimes the collation is
+		fixed in some table columns or inside stored procedures to solve some of
+		relationship problems with columns that have different collations. The most
+		common technique to have a consistent collation for the instance and all it
+		databases has a lot of steps and can sometimes be problematic.&nbsp; Can you
+		provide any suggestions?
+		</p>
+
+		<p><b>Solution</b></p>
+
+		<p>A simple way to correct the collations
+		in a few steps is outlined in this tip. It is recommended to create a backup of 
+		all databases (including system databases) before take administrative actions on a 
+		SQL Server instance. It is important to ensure that there is no fixed collation 
+		logic in columns or inside stored procedures, triggers, etc., 
+		otherwise the command below may report problems.
+		</p>
+
+		<p style="font-weight: bold; color: orange;">Step 1 - Determine the SQL Server Collation</p>
+
+		<p>Let's confirm the current SQL Server
+		instance collation and all it databases including system databases collation
+		before taking actions.</p>
+
+		<p>The server has the
+		&quot;Latin1_General_CI_AS&quot; collation and we'll change it to
+		&quot;SQL_Latin1_General_CP1_CI_AI&quot; for this test.</p>
+
+		<p style="font-weight: bold; color: orange;">Step 2 - Stop the SQL Server Services</p>
+
+		<p>First of all, we have to stop the SQL Server Services for the changes to be applied.</p>
+
+		<p style="font-weight: bold; color: orange;">
+		Step 3 - Open a Command Prompt and Navigate to the Binn Directory
+		</p>
+
+		<p>Now we have to open a command prompt
+		with administrative privileges and go to the BINN directory of Microsoft SQL
+		Server, following the example below:</p>
+
+		<p>This picture shows the SQL Server Binn
+		directory and &quot;sqlservr.exe&quot; that will be used in this test.</p>
+		
+		<p style="font-weight: bold; color: orange;">Step 4 - Apply a New SQL Server Collation</p>
+
+		<p>Execute the command below. A lot of
+		information will appears and no user action is required, just close the prompt
+		window after the execution ends.&nbsp; The parameter &quot;-s&quot; is only
+		necessary if more than one SQL Server instance exists on the target machine.
+		(run as Administrator)</p>
+
+		<p style="padding: 10px 20px; background-color:lightgrey;">
+		sqlservr -m -T4022 -T3659 -s&quot;SQLEXP2014&quot; -q&quot;SQL_Latin1_General_CP1_CI_AI&quot;
+		</p>
+
+		<p>Parameters used:
+		[-m] single user admin mode <br />
+		[-T] trace flag turned on at startup <br />
+		[-s] sql server instance name <br />
+		[-q] new collation to be applied
+		</p>
+
+		<p style="font-weight: bold; color: orange;">Step 5 - Start SQL Server and Verify Collation</p>
+
+		<p>Start the SQL Server instance and
+		confirm that all changes were applied on the instance and all databases
+		including system databases have the correct collation.</p>
+	</div>
+</body>
+</html>

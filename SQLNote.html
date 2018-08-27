@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Fix for access denied to administrative shares</title>
+</head>
+
+<body>
+
+<div>
+
+<p><b><span>-- Custom Sorting</span></b></p>
+
+<p><span>SELECT crn, task_status</span></p>
+
+<p><span>FROM [cws].[dbo].[tbl_task]</span></p>
+
+<p><span>WHERE task_status IN ('C', 'O', 'I')</span></p>
+
+<p><span>ORDER BY ( -- order seq: 'O', 'C', 'I'</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CASE
+WHEN task_status='O' THEN 0 </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;WHEN
+task_status='C' THEN 1 </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;ELSE
+2</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; END</span></p>
+
+<p><span>) ASC</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>-- Query Table Size</span></b></p>
+
+<p><span>SELECT </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; t.NAME AS TableName,</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; s.Name AS SchemaName,</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; p.rows AS RowCounts,</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; SUM(a.total_pages) * 8 AS
+TotalSpaceKB, </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; SUM(a.used_pages) * 8 AS
+UsedSpaceKB, </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; (SUM(a.total_pages) -
+SUM(a.used_pages)) * 8 AS UnusedSpaceKB</span></p>
+
+<p><span>FROM </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; sys.tables t</span></p>
+
+<p><span>INNER JOIN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; sys.indexes i ON
+t.OBJECT_ID = i.object_id</span></p>
+
+<p><span>INNER JOIN </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; sys.partitions p ON
+i.object_id = p.OBJECT_ID AND i.index_id = p.index_id</span></p>
+
+<p><span>INNER JOIN </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; sys.allocation_units a ON
+p.partition_id = a.container_id</span></p>
+
+<p><span>LEFT OUTER JOIN </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; sys.schemas s ON
+t.schema_id = s.schema_id</span></p>
+
+<p><span>WHERE </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; t.NAME NOT LIKE 'dt%' </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; AND t.is_ms_shipped = 0</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; AND i.OBJECT_ID &gt; 255 </span></p>
+
+<p><span>GROUP BY </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; t.Name, s.Name, p.Rows</span></p>
+
+<p><span>ORDER BY </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; 1 desc</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>-- Delete Duplicated Item</span></b></p>
+
+<p><span>WITH CTE AS(</span></p>
+
+<p><span>&nbsp;&nbsp; SELECT *,</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RN =
+ROW_NUMBER()OVER(PARTITION BY wo_id,item_no ORDER BY wo_id,item_no)</span></p>
+
+<p><span>&nbsp;&nbsp; FROM dbo.t_wo_item</span></p>
+
+<p><span>&nbsp;&nbsp; --where mod_time &gt; '20150924'</span></p>
+
+<p><span>)</span></p>
+
+<p><span>delete from CTE where rn &gt; 1</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>-- Query SQL Agent Job with Next Run Time</span></b></p>
+
+<p><span>SELECT [sJOB].[job_id] AS [JobID],
+[sJOB].[name] AS [JobName]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; , CASE </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+WHEN [sJOBH].[run_date] IS NULL OR [sJOBH].[run_time] IS NULL THEN NULL</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ELSE CAST(</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+CAST([sJOBH].[run_date] AS CHAR(8))</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
++ ' ' </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
++ STUFF(</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+STUFF(RIGHT('000000' + CAST([sJOBH].[run_time] AS VARCHAR(6)),&nbsp; 6)</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, 3, 0, ':')</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, 6, 0, ':')</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+AS DATETIME)</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; END AS
+[LastRunDateTime]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; , CASE [sJOBH].[run_status]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;WHEN
+0 THEN 'Failed'</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+WHEN 1 THEN 'Succeeded'</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+WHEN 2 THEN 'Retry'</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+WHEN 3 THEN 'Canceled'</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+WHEN 4 THEN 'Running' -- In Progress</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; END AS
+[LastRunStatus]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; , STUFF(</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+STUFF(RIGHT('000000' + CAST([sJOBH].[run_duration] AS VARCHAR(6)),&nbsp; 6)</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, 3, 0, ':')</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, 6, 0, ':') </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AS
+[LastRunDuration (HH:MM:SS)]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; , [sJOBH].[message] AS
+[LastRunStatusMessage]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; , CASE
+[sJOBSCH].[NextRunDate]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+WHEN 0 THEN NULL</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ELSE CAST(</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CAST([sJOBSCH].[NextRunDate]
+AS CHAR(8))</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
++ ' ' </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
++ STUFF(</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+STUFF(RIGHT('000000' + CAST([sJOBSCH].[NextRunTime] AS VARCHAR(6)),&nbsp; 6)</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, 3, 0, ':')</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, 6, 0, ':')</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+AS DATETIME)</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; END AS
+[NextRunDateTime]</span></p>
+
+<p><span>FROM </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; [msdb].[dbo].[sysjobs] AS
+[sJOB]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; LEFT JOIN (</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SELECT&nbsp; [job_id]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, MIN([next_run_date]) AS [NextRunDate]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, MIN([next_run_time]) AS [NextRunTime]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+FROM [msdb].[dbo].[sysjobschedules]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GROUP BY [job_id]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+) AS [sJOBSCH]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ON
+[sJOB].[job_id] = [sJOBSCH].[job_id]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp; LEFT JOIN (</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SELECT [job_id], [run_date], [run_time], [run_status], [run_duration] ,
+[message]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+, ROW_NUMBER() OVER (</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+PARTITION BY [job_id] </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ORDER BY [run_date] DESC, [run_time] DESC</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+) AS RowNumber</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+FROM [msdb].[dbo].[sysjobhistory]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+WHERE [step_id] = 0</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+) AS [sJOBH]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ON
+[sJOB].[job_id] = [sJOBH].[job_id]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AND
+[sJOBH].[RowNumber] = 1</span></p>
+
+<p><span>ORDER BY [JobName]</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>--Returning Date part with time all set to
+0</span></b></p>
+
+<p><span>SELECT DATEADD(dd, 0, DATEDIFF(dd, 0,
+DATEADD(month, -2, GETDATE())))</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>[Date part only]</span></p>
+
+<p><span>SELECT Convert(date, Getdate())</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>--Query Remote Table</span></b></p>
+
+<p><span>SELECT * FROM OPENQUERY([linked_server],
+¡¥[query]¡¦)</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>--Export DB record to csv file</span></b></p>
+
+<p><span>1. Using SQLCMD (can run sql from .sql file)</span></p>
+
+<p><span>sqlcmd -S 172.16.2.78,1443 -d cws -U sa -P
+itapps -s, -W -Q &quot;SELECT TOP 10 * FROM tbl_task&quot; &gt; D:\tbl_taks.csv</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>2. Using Bcp (cannot run sql from .sql file)</span></p>
+
+<p><span>bcp &quot;SELECT TOP 10 * FROM tbl_task&quot;
+queryout D:\tbl_task2.csv -t, -c -S 172.16.2.78,1443 -d cws -U sa -P itapps -C
+65001 -e D:\bcp_errorflie.txt</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>--Concatenate multiple row into one</span></b></p>
+
+<p><span>SELECT STUFF((</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT
+',' + name FROM (</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT
+'A' as name UNION</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT
+'B' as name UNION</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT
+'A' as name</span></p>
+
+<p><span>) A FOR XML PATH(''), TYPE).value('.',
+'VARCHAR(MAX)'), 1, 1, '')</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>SQL Account</span></b></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>1. if user 'dbo' assigned to other login
+instead of 'sa'</span></p>
+
+<p><span>ALTER AUTHORIZATION ON database::ASD TO sa</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>2. get logged in session</span></p>
+
+<p><span>select * from sys.dm_exec_sessions</span></p>
+
+<p><span>where login_name not in ('sa', 'idb')</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>3. new user / login with limited table access</span></p>
+
+<p><span>CREATE LOGIN XYZ WITH PASSWORD = 'PASSWORD'</span></p>
+
+<p><span>CREATE USER xyz FOR LOGIN xyz</span></p>
+
+<p><span>//GRANT SELECT ON DBNAME.TABLE_NAME TO xyz</span></p>
+
+<p><span>CREATE ROLE</span></p>
+
+<p><span>GRANT SELECT ON DBNAME.TABLE_NAME TO role</span></p>
+
+<p><span>sp_addrolemember role, user</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>Update Field Based On Other Table Field
+Value In Trigger</span></b></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>CREATE TRIGGER
+[dbo].[trigger_inspectionstatus]</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ON
+tbl_task</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AFTER
+UPDATE</span></p>
+
+<p><span>AS</span></p>
+
+<p><span>BEGIN</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IF
+UPDATE(task_status)</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BEGIN</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UPDATE
+tbl_task </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SET
+tbl_task.inspection_status = A.inspect_result</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; --OUTPUT
+inserted.task_id INTO tbl_task_check(task_id)</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FROM
+(</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT
+task_id, task_status,</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CASE
+WHEN charindex('N', status) &gt; 0 THEN 'N' </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;
+WHEN len(status) = 1 AND status='C' THEN 'C'</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;
+ELSE 'A' END AS 'inspect_result'</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FROM
+(</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT
+DISTINCT task_id, task_status,</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; status=stuff((</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT
+DISTINCT ',' + result_code FROM tbl_task_result D</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WHERE
+D.task_id = C.task_id</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ORDER
+BY ',' + result_code FOR XML PATH('')</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ),
+1, 1, '')</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; --FROM&nbsp;
+tbl_task C </span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; --WHERE
+task_id IN ('MWO_29041010','MWO_44534700')</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FROM
+inserted C</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )
+B</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )
+A</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; JOIN
+deleted E on A.task_id = E.task_id</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WHERE
+E.task_status='I' AND A.task_status='S' AND tbl_task.task_id = A.task_id</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; END</span></p>
+
+<p><span>END</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>Faster Deletion</span></b></p>
+
+<p><span>SET ROWCOUNT 10000</span></p>
+
+<p><span>delete_more:</span></p>
+
+<p><span>&nbsp;&nbsp;&nbsp;&nbsp; DELETE FROM RRFTable
+WHERE CallinDateTime &lt; '20160101'</span></p>
+
+<p><span>IF @@ROWCOUNT &gt; 0 GOTO delete_more</span></p>
+
+<p><span>SET ROWCOUNT 0</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>List SP &amp; Parameters</span></b></p>
+
+<p><span>select o.name,&nbsp; replace(p.name, '@', '')</span></p>
+
+<p><span>from sys.all_objects o </span></p>
+
+<p><span>left outer join sys.all_parameters p</span></p>
+
+<p><span>on p.object_id = o.object_id </span></p>
+
+<p><span>where o.type IN ('P') and is_ms_shipped = 0</span></p>
+
+<p><span>order by o.name</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><b><span>Run OS cmd</span></b></p>
+
+<p><span>EXEC sp_configure 'show advanced options', 1</span></p>
+
+<p><span>GO</span></p>
+
+<p><span>-- To update the currently configured value
+for advanced options.</span></p>
+
+<p><span>RECONFIGURE</span></p>
+
+<p><span>GO</span></p>
+
+<p><span>-- To enable the feature.</span></p>
+
+<p><span>EXEC sp_configure 'xp_cmdshell', 1</span></p>
+
+<p><span>GO</span></p>
+
+<p><span>-- To update the currently configured value
+for this feature.</span></p>
+
+<p><span>RECONFIGURE</span></p>
+
+<p><span>GO</span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>EXEC sys.xp_cmdshell 'MOVE /Y
+C:\CSV_Files\test.txt C:\FTP_Folder\' </span></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><i><span>Note: use </span></i><i><span>EXEC</span></i><i><span>
+xp_cmdshell </span></i><i><span>'whoami' </span><span>to see whether the running account has permission to manipulating those
+file / folder</span></i></p>
+
+<p><span>&nbsp;</span></p>
+
+<p><span>--</span></p>
+
+</div>
+
+</body>
+
+</html>
