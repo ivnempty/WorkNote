@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>TSQL Data Import With Format File</title>
+</head>
+
+<body>
+	<div>
+		<h3>TSQL Data Import With Format File</h3>
+
+		<p>Data File</p>
+
+		<p>
+			105KEI LUNG HA LO WAI&nbsp;&nbsp;&nbsp;&nbsp;企嶺下老圍&nbsp;&nbsp;&nbsp;A01/03/1997<br />
+			106KENNEDY TOWN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;堅尼地城 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A01/03/1997<br />
+			107KEUNG SHAN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;羌山&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A01/03/1997<br />
+			108KING'S PARK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;京士柏&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A01/03/1997<br />
+		</p>
+		
+		<br /><br />
+		<p>Format File</p>
+		<p>
+9.0<br />
+6<br />
+1	SQLCHAR		0	3	&nbsp;&nbsp;""	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1	ID	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chinese_Taiwan_Stroke_CI_AS<br />
+2	SQLCHAR		0	50	""	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2	ENName	Chinese_Taiwan_Stroke_CI_AS<br />
+3	SQLCHAR		0	50	""	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3	CHName	Chinese_Taiwan_Stroke_CI_AS<br />
+4	SQLCHAR		0	1	&nbsp;&nbsp;""	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4 Status &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chinese_Taiwan_Stroke_CI_AS<br />
+5	SQLCHAR		0	10	""	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5	Date	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chinese_Taiwan_Stroke_CI_AS<br />
+6	SQLCHAR		0	2	&nbsp;&nbsp;"\r\n"	6	Eol	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chinese_Taiwan_Stroke_CI_AS<br />
+		</p>
+		
+		<br /><br />
+		<p>TSQL</p>
+		<p>
+SELECT * FROM <br />
+&nbsp;&nbsp;&nbsp;&nbsp;OPENROWSET(BULK 'D:\data.txt',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FORMATFILE='D:\test.fmt',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ERRORFILE='D:\err.txt'<br />
+) AS Test<br />
+		</p>
+	</div>
+</body>
+</html>
