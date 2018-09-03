@@ -1,0 +1,64 @@
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Preliminary Parse ICS Data in SalesForce</title>
+</head>
+
+<body>
+
+	<p>Below is the ICS sample data</p>
+
+	<pre>
+	//===== ICS Format =====
+	BEGIN:VCALENDAR
+	PRODID:-//1823 Call Centre, Efficiency Unit, HKSARG//Hong Kong Public Holidays//EN
+	VERSION:2.0
+	CALSCALE:GREGORIAN
+	X-WR-TIMEZONE:Asia/Hong_Kong
+	X-WR-CALNAME:Hong Kong Public Holidays
+	X-WR-CALDESC:Hong Kong Public Holidays
+	DTSTART;VALUE=DATE:20180925
+	DTEND;VALUE=DATE:20180926
+	TRANSP:TRANSPARENT
+	UID:20180925@1823.gov.hk
+	SUMMARY:The day following the Chinese Mid-Autumn Festival
+	END:VEVENT
+	BEGIN:VEVENT
+	DTSTART;VALUE=DATE:20181001
+	DTEND;VALUE=DATE:20181002
+	TRANSP:TRANSPARENT
+	UID:20181001@1823.gov.hk
+	SUMMARY:National Day
+	END:VEVENT
+	END:VCALENDAR
+	</pre>
+
+	<p>And the Salesforce Apex code to preliminary parse the data to "Date &lt;-&gt; String" map</p>
+
+	<pre>
+	HttpRequest req = new HttpRequest();
+	req.setEndpoint('http://www.1823.gov.hk/common/ical/gc/en.ics');
+	req.setMethod('GET');
+
+	Http http = new Http();
+	HttpResponse res = http.send(req);
+	String[] dateArray = res.getBody().split('BEGIN:');
+
+	Map<date, string> dateMap = new Map<date, string>();
+	for (String dateStr : dateArray) {
+		integer idx = dateStr.indexOf('DTSTART;');
+		if (idx <= 0) continue;
+		
+		string d = dateStr.substring(idx + 19, dateStr.indexOf('DTEND;'));
+		d = d.substring(0, 4) + '-' + d.substring(4, 6) + '-' + d.substring(6, 8); //format the date string
+		
+		string smr = dateStr.subString(dateStr.indexOf('SUMMARY:') + 8, dateStr.indexOf('END:') - 1); //remove last new line character
+		
+		dateMap.put(Date.valueOf(d), smr); //parse date string to date object
+	}
+
+	System.debug(dateMap);
+	</pre>
+
+</body>
+</html>

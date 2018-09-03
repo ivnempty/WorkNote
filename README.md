@@ -11,3 +11,4 @@
 * [TSQL Data Import With Format File](https://ivnempty.github.com/WorkNote/TSQLDataImport.html")
 * [Setup Database Mail in SQL Server Management Studio](https://ivnempty.github.com/WorkNote/SSMSAddMail.html")
 * [ECMAScript: Click with heart effect](https://ivnempty.github.com/WorkNote/MouseClickHeart.html")
+* [Preliminary Parse ICS Data in SalesForce](https://ivnempty.github.com/WorkNote/SFParseICSToMap.html")
