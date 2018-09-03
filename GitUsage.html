@@ -5,59 +5,35 @@
 	<title>Fix for access denied to administrative shares</title>
 </head>
 
-<body lang=EN-US>
+<body>
+	<div>
+		<p>View all branch (including remote branches)</p>
+		<p>git branch -a</p>
+		<p>&nbsp;</p>
 
-<div class=WordSection1>
+		<p>Delete local branch</p>
+		<p>git branch -d &lt;branch name&gt;</p>
+		<p>&nbsp;</p>
 
-<p class=MsoNormal><span lang=EN>View all branch (including remote branches)</span></p>
+		<p>Delete remote branch</p>
+		<p>git push origin --delete &lt;branch name&gt;</p>
+		<p>or</p>
+		<p>git push origin :&lt;branch name&gt;</p>
+		<p>&nbsp;</p>
 
-<p class=MsoNormal><span lang=EN>git branch -a</span></p>
+		<p>Create local branch from remote branch</p>
+		<p>git branch &lt;local branch name&gt;
+		origin/&lt;remote branch name&gt;</p>
+		<p>&nbsp;</p>
 
-<p class=MsoNormal><span lang=EN>&nbsp;</span></p>
+		<p>Switch to other branch</p>
+		<p>git checkout &lt;branch name&gt;</p>
+		<p>&nbsp;</p>
 
-<p class=MsoNormal><span lang=EN>Delete local branch</span></p>
-
-<p class=MsoNormal><span lang=EN>git branch -d &lt;branch name&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN>Delete remote branch</span></p>
-
-<p class=MsoNormal><span lang=EN>git push origin --delete &lt;branch name&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN>or</span></p>
-
-<p class=MsoNormal><span lang=EN>git push origin :&lt;branch name&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN>Create local branch from remote branch</span></p>
-
-<p class=MsoNormal><span lang=EN>git branch &lt;local branch name&gt;
-origin/&lt;remote branch name&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN>Switch to other branch</span></p>
-
-<p class=MsoNormal><span lang=EN>git checkout &lt;branch name&gt;</span></p>
-
-<p class=MsoNormal><span lang=EN>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN>Delete last commit (local &amp; remote)</span></p>
-
-<p class=MsoNormal><span lang=EN>git reset HEAD^ --hard</span></p>
-
-<p class=MsoNormal><span lang=EN>git push origin -f</span></p>
-
-<p class=MsoNormal><span lang=EN>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN>&nbsp;</span></p>
-
-<p class=MsoNormal><span lang=EN>&nbsp;</span></p>
-
-</div>
-
+		<p>Delete last commit (local &amp; remote)</p>
+		<p>git reset HEAD^ --hard</p>
+		<p>git push origin -f</p>
+		<p>&nbsp;</p>
+	</div>
 </body>
-
 </html>
