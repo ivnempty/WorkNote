@@ -15,6 +15,18 @@
 			<img alt="SQLServer_Mail_Setup_03" src="images/SQLServer_Mail_Setup_03.png" /><br />
 			<img alt="SQLServer_Mail_Setup_04" src="images/SQLServer_Mail_Setup_04.png" /><br />
 		</p>
+		<br /><br />
+		<p>
+		Send email from T-SQL<br />
+		<pre>
+EXEC msdb.dbo.sp_send_dbmail  
+    @profile_name = 'Test',  
+    @recipients = 'recipient@test.com',  
+    @body = '<span style="color:red">Test</span> send mail',  
+    @body_format = 'HTML',
+    @subject = 'Test send mail from sql server' 
+		</pre>
+		</p>
 	</div>
 </body>
 </html>
