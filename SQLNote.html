@@ -560,7 +560,37 @@ file / folder</span></i></p>
 
 <p><span>&nbsp;</span></p>
 
-<p><span>--</span></p>
+<p>TSQL UPSERT data from newer table</p>
+<p>
+<pre>
+BEGIN TRAN
+
+DECLARE @lastModTime varchar(19)
+SELECT @lastModTime = MAX(mod_time) FROM [elder_table]
+IF @@ROWCOUNT = 0 
+	SET @lastModTime = CONVERT(varchar(10), DATEADD(MONTH, -2, GETDATE()), 120)
+
+MERGE elder_table AS K
+USING (SELECT * FROM newer_table WHERE [mod_time] > @lastModTime) AS L
+ON K.[id] = L.[mid]
+WHEN MATCHED AND K.[mod_time] < L.[mod_time] THEN
+	UPDATE SET  K.[status]=L.[status]
+			   ,K.[mod_by]=L.[mod_by]
+			   ,K.[mod_time]=L.[mod_time]
+WHEN NOT MATCHED THEN
+	INSERT ([id],[create_date],[status][mod_by],[mod_time])
+	VALUES (L.[id],L.[create_date],L.[status],L.[mod_by],L.[mod_time])
+;
+
+IF @@ERROR <> 0 
+	ROLLBACK TRAN
+ELSE
+	COMMIT TRAN
+</pre>
+</p>
+
+<br /><br />
+<p>--</p>
 
 </div>
 
