@@ -13,3 +13,4 @@
 * [ECMAScript: Click with heart effect](https://ivnempty.github.com/WorkNote/MouseClickHeart.html)
 * [Preliminary Parse ICS Data in SalesForce](https://ivnempty.github.com/WorkNote/SFParseICSToMap.html)
 * [Some SalesForce Note](https://ivnempty.github.com/WorkNote/SalesforceNote.html)
+* [Configuration for Remote Connecting to New Windows Server VM](https://ivnempty.github.com/WorkNote/RemoteNewVMServer.html)

@@ -590,6 +590,17 @@ ELSE
 </p>
 
 <br /><br />
+
+<p>XML Output</p>
+<pre>
+SELECT 
+'col1' as 'column/@name', [DATE] as 'column', null, 
+'col2' as 'column/@name', [ID] as 'column', null, 
+'col3' as 'column/@name', [NAME] as 'column', null
+FROM TEST_TBL
+FOR XML PATH('row'), ROOT('resultset')
+</pre>
+
 <p>--</p>
 
 </div>

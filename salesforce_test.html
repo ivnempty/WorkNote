@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Fix for access denied to administrative shares</title>
+</head>
+
+<body>
+	<div style='text-align: center; margin-bottom: 15px;'><h2>Salesforce Testing</h2></div>
+	
+	<div>
+	<b>Get Record Type</b>
+	<pre>
+	List<Schema.RecordTypeInfo> RT = ((Schema.DescribeSObjectResult) Opportunity.SObjectType.getDescribe()).getRecordTypeInfos();
+	System.debug(RT);
+
+	List<AsyncApexJob> jobs = [SELECT Id, Status FROM AsyncApexJob WHERE Status NOT IN ('Completed', 'Failed')];
+	for (AsyncApexJob job : jobs) {
+		System.abortJob(job.Id);
+	}
+
+
+	String body = [select id, body from Attachment where id='00PN0000007NSEb'].body.toString(); //use less variable to reduce heap size
+	//System.debug('1. Heap Size: ' + Limits.getHeapSize());
+
+	List<String> lineList = new List<String>(); 
+	Integer maxLineProcess = 10, startIndex = 0, endIndex = 0;
+
+	for (Integer i = 0; i < body.length(); i++) {
+		if (body.charAt(i) != 10) continue; //loop char until find the line ending
+
+		endIndex = body.charAt(i - 1) == 13 ? i - 1 : i; //skip \r    
+		lineList.add(body.substring(startIndex, endIndex));
+		//System.debug(body.substring(startIndex, endIndex));
+		
+		startIndex = i + 1; 
+		//System.debug('For Loop ' + i + ', Heap Size: ' + Limits.getHeapSize());  //skip \n
+		
+		if (lineList.size() > maxLineProcess) { //process the batch, renew list
+			lineList = new List<String>(); 
+			//System.debug('Renew List: Heap Size: ' + Limits.getHeapSize());
+		}
+	}
+
+	lineList = null; 
+	//System.debug('2. Heap Size: ' + Limits.getHeapSize()); //free up variable
+	body = null;
+	//System.debug('3. Heap Size: ' + Limits.getHeapSize()); //free up variable
+	</pre>
+	<br /><br />
+	
+	<b>Read CSV to line &amp; Process by Batch</b>
+	<pre>
+	public class CSVIterator implements Iterator<String>, Iterable<String> {
+		String data;
+		Integer startIndex = 0;
+		
+		public CSVIterator(String source) { data = source; }
+		
+		public Boolean hasNext() { return startIndex < data.length(); }
+		
+		public String next() {
+			Integer endIndex = data.indexOf('\n', startIndex);
+			if (endIndex < 0) endIndex = data.length();
+			
+			String lineContent = data.subString(startIndex, endIndex);
+			startIndex = endIndex + 1;
+			
+			return lineContent;
+		}
+		
+		public Iterator<String> Iterator() { return this; }
+	}
+
+	global class CSVBatchProcessor implements Database.Batchable<String> {
+	   
+		String soql;
+		Id rauId;
+		
+		global CSVBatchProcessor(String soql) { this.soql = soql; }
+		
+		global CSVBatchProcessor(String soql, Id rauId) { this.soql = soql; this.rauId = rauId;}
+		
+		global Iterable<String> start(Database.BatchableContext context) {
+			return new CSVIterator(((Attachment)Database.query(soql)[0]).body.toString());
+		}
+		
+		global void execute(Database.BatchableContext context, List<String> scope) {
+			if (this.rauId <> null) insert new Note(parentId=rauId, title=scope.size() + 'record processed', body='first record: ' + scope.get(0));
+			System.debug(scope.size());
+		}
+		
+		global void finish(Database.BatchableContext context) {}
+	}
+	</pre>
+	<br /><br />
+	
+	<b>Update Picklist from Rest API</b>
+	<pre>
+	String fieldDef = '{"Metadata":{"valueSet" : {"value" : [ {"label" : "None","valueName" : "None"}, {"label" : "ABC","valueName" : "ABC"}]}}},"FullName":"Case.test__c"}';
+	HttpRequest req = new HttpRequest();
+	req.setBody(fieldDef);
+	req.setHeader('Authorization', 'Bearer ' + UserInfo.getSessionID());
+	req.setHeader('Content-Type', 'application/json');      
+	req.setEndpoint(URL.getSalesforceBaseUrl().toExternalForm()+'/services/data/v43.0/tooling/sobjects/CustomField/00N0K00000JpAp7?_HttpMethod=PATCH');//replace id with your GlobalPicklist Id**
+	req.setMethod('POST');
+	//req.setHeader('X-HTTP-Method-Override','PATCH');
+	Http httpreq = new Http();
+	HttpResponse res  = httpreq.send(req);
+	system.debug(res.getBody());
+	</pre>
+	<br /><br />
+	
+	<b>Get ListView SOQL By ListView Id</b>
+	<pre>
+	static String getListViewSOQLById(String sObj, String listId, String listSize) {
+		System.debug('getListViewSOQLById - do call out');
+		
+		//add domain url to Remote Site Setting
+		//1. for this page: https://c.cs6.visual.force.com
+		//2. for webservice: https://cs6.salesforce.com
+		String domainUrl = URL.getSalesforceBaseUrl().toExternalForm();
+		String endpointUrl = domainUrl + '/services/data/v37.0/sobjects/' + sObj + '/listviews/' + listId + '/describe';
+		
+		//HTTP callouts
+		HttpRequest req = new HttpRequest();
+		req.setHeader('Authorization', 'Bearer ' + UserInfo.getSessionID());
+		req.setHeader('Content-Type', 'application/json');
+		req.setEndpoint(endpointUrl);
+		req.setMethod('GET');      
+		Http h = new Http();
+		
+		if (!Test.isRunningTest()) {
+			HttpResponse res = h.send(req);
+			Map<String,Object> root = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());         
+			return (String)root.get('query') + ' LIMIT ' + listSize;
+		} else {
+			return 'SELECT Name, Contact__r.Name, Coupon_Configuration__r.Name, CreatedDate, Id, RecordTypeId, LastModifiedDate, SystemModstamp FROM Purchase_Record__c WHERE RecordTypeId = \'012N00000004xFD\' AND DM_Type__c = \'DM2\' AND Pending_for_Mailmerge__c = true AND Valid_Address__c = true ORDER BY Name ASC NULLS FIRST, Id ASC NULLS FIRST LIMIT 1000';
+		}
+	}
+	</pre>
+	<br /><br />
+	
+	<b>JSON Generate &amp; Parse</b>
+	<pre>
+	/* Parse JSON String Example */
+	private void testParseJson() {
+		String jsonStr = '{' +
+		'"id": "123456",' +
+		'"name": "Gender",' +
+		'"type": "SET",' +
+		'"options": [{' +
+		'"itemId": "1",' +
+		'"value": "Male"},' +
+		'{"itemId": "2",' +
+		'"value": "Female"' +
+		'}],' +
+		'"mergeTag": "MERGE10"' +
+		'}';
+		
+		Map<String, Object> obj = (Map<String, Object>)JSON.deserializeUntyped(jsonStr);
+		System.debug(obj.get('id'));
+		
+		List<Object> optionList = (List<Object>)obj.get('options');
+		System.debug(optionList[0]);
+		
+		Map<String, Object> option2 = (Map<String, Object>)optionList[1];
+		System.debug(option2.get('value'));
+	}
+	
+	/* Generate JSON String Example. The result string should same as above case */
+	private void testGenJson() {
+		JSONGenerator gen = JSON.createGenerator(true);
+		gen.writeStartObject();
+		gen.writeStringField('id', '123465');
+		gen.writeStringField('name', 'Gender');
+		gen.writeStringField('type', 'SET');
+		
+		gen.writeFieldName('options');
+			gen.writeStartArray();
+				gen.writeStartObject();
+				gen.writeStringField('itemId', '1');
+				gen.writeStringField('value', 'Male');
+				gen.writeEndObject();
+				
+				gen.writeStartObject();
+				gen.writeStringField('itemId', '2');
+				gen.writeStringField('value', 'Female');
+				gen.writeEndObject();
+			gen.writeEndArray();
+		
+		gen.writeStringField('mergeTag', 'MERGE10');
+		gen.writeEndObject();
+		
+		System.debug(gen.getAsString());
+	}
+	</pre>
+	<br /><br />
+	
+	<b>File Upload to External Server</b>
+	<pre>
+	String fileName = 'test.csv';
+	String fileContent = '1,2,3,4\r\n4,5,6,7';
+	
+	String uploadEndpoint = 'https://uguu.se/api.php?d=upload';  
+	
+	String boundary = 'sfdc_boundary_csv';
+	
+	String header = '--' + boundary + '\r\nContent-Disposition: form-data; name="file"; filename="' + fileName + '"\r\nContent-Type: application/octet-stream';
+	// no trailing padding on header by adding ' ' before the last "\n\n" characters
+	String headerEncoded = EncodingUtil.base64Encode(Blob.valueOf(header + '\r\n\r\n'));
+	//this ensures no trailing "=" padding
+	while(headerEncoded.endsWith('=')) {
+		header += ' ';
+		headerEncoded = EncodingUtil.base64Encode(Blob.valueOf(header + '\r\n\r\n'));
+	}
+
+	//base64 encoded body
+	String bodyEncoded = EncodingUtil.base64Encode(Blob.valueOf(fileContent));
+
+	//base64 encoded footer
+	String footer = '\n--' + boundary + '--';
+	String footerEncoded = EncodingUtil.base64Encode(Blob.valueOf(footer));
+
+	Blob bodyBlob = null;
+	//last encoded body bytes
+	String last4Bytes = bodyEncoded.substring(bodyEncoded.length() - 4,bodyEncoded.length());
+	//if the last 4 bytes encoded base64 ends with the padding character (= or ==) then re-encode those bytes with the footer
+	//to ensure the padding is added only at the end of the body
+	if(last4Bytes.endsWith('='))
+	{
+		Blob decoded4Bytes = EncodingUtil.base64Decode(last4Bytes);
+		HttpRequest tmp = new HttpRequest();
+		tmp.setBodyAsBlob(decoded4Bytes);
+		String last4BytesFooter = tmp.getBody() + footer;  
+		bodyBlob = EncodingUtil.base64Decode(headerEncoded + bodyEncoded.substring(0, bodyEncoded.length() - 4) + EncodingUtil.base64Encode(Blob.valueOf(last4BytesFooter)));
+	} else {
+		bodyBlob = EncodingUtil.base64Decode(headerEncoded + bodyEncoded + footerEncoded);
+	}
+
+	if(bodyBlob.size() > 3000000) //Callout data size limit: (sync) 6 MB, (async) 12 MB
+	{
+		//this a "public class CustomException extends Exception{}"
+		//throw new CustomException('File size limit is 3 MBytes');
+	}
+
+	HttpRequest req = new HttpRequest();
+	req.setHeader('Content-Type','multipart/form-data; boundary='+boundary);
+	req.setMethod('POST');
+	req.setEndpoint(uploadEndpoint); 
+	req.setBodyAsBlob(bodyBlob);
+	req.setTimeout(60000);
+	req.setHeader('Content-Length', String.valueof(req.getBodyAsBlob().size()));
+	Http http = new Http();
+	HTTPResponse resp = http.send(req);
+
+	System.debug(resp.getBody());
+	</pre>
+	</div>
+</body>
+</html>
