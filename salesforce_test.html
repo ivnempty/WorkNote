@@ -95,16 +95,17 @@
 	</pre>
 	<br /><br />
 	
-	<b>Update Picklist from Rest API</b>
+	<b>Update Global Picklist Value Set from Rest API</b>
 	<pre>
-	String fieldDef = '{"Metadata":{"valueSet" : {"value" : [ {"label" : "None","valueName" : "None"}, {"label" : "ABC","valueName" : "ABC"}]}}},"FullName":"Case.test__c"}';
+	Id picklistId = '0NtN000000004jP';
+	String picklistName = 'ProductTest';
+	String fieldDef = '{"Metadata":{"customValue":[{"label":"Value1","valueName":"p1"},{"label":"Value2","valueName":"p2"},{"label":"Value3","valueName":"p3"}], "masterLabel":"' + picklistName + '"},"FullName":"' + picklistName + '"}';
 	HttpRequest req = new HttpRequest();
 	req.setBody(fieldDef);
 	req.setHeader('Authorization', 'Bearer ' + UserInfo.getSessionID());
 	req.setHeader('Content-Type', 'application/json');      
-	req.setEndpoint(URL.getSalesforceBaseUrl().toExternalForm()+'/services/data/v43.0/tooling/sobjects/CustomField/00N0K00000JpAp7?_HttpMethod=PATCH');//replace id with your GlobalPicklist Id**
+	req.setEndpoint(URL.getSalesforceBaseUrl().toExternalForm()+'/services/data/v43.0/tooling/sobjects/GlobalValueSet/' + picklistId + '?_HttpMethod=PATCH');
 	req.setMethod('POST');
-	//req.setHeader('X-HTTP-Method-Override','PATCH');
 	Http httpreq = new Http();
 	HttpResponse res  = httpreq.send(req);
 	system.debug(res.getBody());
