@@ -601,6 +601,18 @@ FROM TEST_TBL
 FOR XML PATH('row'), ROOT('resultset')
 </pre>
 
+<br /><br />
+
+<p>Run CMD Command</p>
+<pre>
+EXEC master..xp_cmdshell 'dir d:'
+
+--Check File Exist
+DECLARE @output INT
+EXEC master..xp_fileexist 'c:\test.txt', @output OUTPUT
+Select @output
+</pre>
+
 <p>--</p>
 
 </div>
