@@ -613,6 +613,34 @@ EXEC master..xp_fileexist 'c:\test.txt', @output OUTPUT
 Select @output
 </pre>
 
+<p>Refresh All Views</p>
+<pre>
+DECLARE @ViewName VARCHAR(256)
+DECLARE cViews CURSOR READ_ONLY FOR SELECT name from sys.views
+OPEN cViews
+FETCH NEXT FROM cViews INTO @ViewName
+WHILE @@FETCH_STATUS != -1
+BEGIN
+	EXEC SP_REFRESHVIEW @ViewName
+	PRINT 'View ''' + @ViewName + ''' has been refreshed.'
+	FETCH NEXT FROM cViews INTO @ViewName
+END
+CLOSE cViews
+DEALLOCATE cViews
+</pre>
+
+<pre>
+USE [cws]
+GO
+DECLARE @sqlcmd NVARCHAR(MAX) = ''
+SELECT @sqlcmd = @sqlcmd +  'EXEC sp_refreshview ''' + name + '''; 
+' 
+FROM sys.objects AS so 
+WHERE so.type = 'V' 
+
+EXEC(@sqlcmd)
+</pre>
+
 <p>--</p>
 
 </div>

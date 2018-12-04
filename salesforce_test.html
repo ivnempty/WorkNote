@@ -11,6 +11,9 @@
 	<div>
 	<b>Get Record Type</b>
 	<pre>
+	//Get Account record type id by name
+	Id devRecordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Development').getRecordTypeId();
+	
 	List<Schema.RecordTypeInfo> RT = ((Schema.DescribeSObjectResult) Opportunity.SObjectType.getDescribe()).getRecordTypeInfos();
 	System.debug(RT);
 
@@ -256,6 +259,34 @@
 	HTTPResponse resp = http.send(req);
 
 	System.debug(resp.getBody());
+	</pre>
+	</div>
+	
+	<div>
+	<p>SOAP Login</p>
+	<pre>
+	HttpRequest req = new HttpRequest();
+	req.setMethod('POST');   
+	req.setTimeout(60000);
+	req.setEndpoint(HOST + '/services/Soap/u/44.0');
+	req.setHeader('Content-Type', 'text/xml;charset=UTF-8');        
+	req.setHeader('SOAPAction', '""');
+	req.setBody('<Envelope xmlns="'+ NS_SOAP +'"><Header/><Body><login xmlns="' + NS_SF + '"><username><![CDATA[' + user + ']]></username><password>' + password + '</password></login></Body></Envelope>');        
+	HttpResponse res =  new Http().send(req);
+	if(res.getStatusCode() == 200) return '';
+	Dom.Document responseDocument = res.getBodyDocument();
+	Dom.Xmlnode rootElm = responseDocument.getRootElement(); // soapenv:Envelope
+	Dom.Xmlnode bodyElm = rootElm.getChildElement('Body', NS_SOAP); // soapenv:Body 
+	Dom.Xmlnode faultElm = bodyElm.getChildElement('Fault', NS_SOAP); // soapenv:Fault
+	Dom.Xmlnode faultStringElm = faultElm.getChildElement('faultstring', null); // faultstring          
+	return faultStringElm.getText(); 
+	</pre>
+	</div>
+	
+	<div>
+	<p>Download document from URL</p>
+	<pre>
+	/servlet/servlet.FileDownload?file=<salesforce id>
 	</pre>
 	</div>
 </body>
