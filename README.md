@@ -15,3 +15,6 @@
 * [Some SalesForce Note](https://ivnempty.github.com/WorkNote/SalesforceNote.html)
 * [SalesForce Testing Code](https://ivnempty.github.com/WorkNote/salesforce_test.html)
 * [Configuration for Remote Connecting to New Windows Server VM](https://ivnempty.github.com/WorkNote/RemoteNewVMServer.html)
+* [Note++ Trick](https://ivnempty.github.com/WorkNote/NotepadPPTrick.html)
+* [Generate WADL from SOAPUI](https://ivnempty.github.com/WorkNote/GenerateWADLfromSOAPUI..html)
+* [ZK Framework Multiple Select ComboBox](https://ivnempty.github.com/WorkNote/ZKMultipleSelectComboBox.html)

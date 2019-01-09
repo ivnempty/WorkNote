@@ -1,0 +1,72 @@
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>ZK Framework - Multiple Select ComboBox</title>
+</head>
+
+<body>
+
+<p>ZUL</p>
+<pre>
+&lt;zk&gt;
+&lt;style&gt;
+    .z-bandbox.bcbox .z-bandbox-btn {
+        background-image: url("images/combobtn.gif");
+    }
+&lt;/style&gt;
+&lt;window title="Feature Test" border="normal" apply="com.asd.Test"&gt;
+    &lt;bandbox id="bBox" width="135px" readonly="true" sclass="bcbox"&gt;
+        &lt;bandpopup&gt;
+            &lt;listbox id="lBox" width="135px" height="60px" multiple="true" checkmark="true"&gt;
+                &lt;listitem label="Value 1" value="v1"/&gt;
+                &lt;listitem label="Value 2" value="v2"/&gt;
+            &lt;/listbox&gt;
+        &lt;/bandpopup&gt;
+    &lt;/bandbox&gt;
+    &lt;button id="btn" label="Show Result"/&gt;
+&lt;/window&gt;
+&lt;/zk&gt;
+</pre>
+
+<p>ZUL</p>
+<pre>
+import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zk.ui.select.annotation.Wire;
+import org.zkoss.zk.ui.util.GenericForwardComposer;
+import org.zkoss.zul.Bandbox;
+import org.zkoss.zul.Listbox;
+import org.zkoss.zul.Listitem;
+import org.zkoss.zul.Messagebox;
+import org.zkoss.zul.Window;
+
+public class Test extends GenericForwardComposer<Window> {
+	private static final long serialVersionUID = -2848868811579315077L;
+	
+	@Wire private Bandbox bBox;
+	@Wire private Listbox lBox;
+	
+	public void doAfterCompose(Window comp) throws Exception {
+		super.doAfterCompose(comp);	
+	}
+	
+	public void onSelect$lBox(Event e) throws InterruptedException {		
+		String str = "";
+		
+		for( Listitem li : lBox.getItems()) {
+            if( !li.isSelected()) continue; 
+
+            if( !str.isEmpty()) str += ", ";
+		    str += li.getValue();
+		}
+		
+		bBox.setValue(str);
+		bBox.setTooltiptext(bBox.getValue());
+	}
+	
+	public void onClick$btn(Event e) throws Exception {
+		Messagebox.show(bBox.getValue());
+	}
+}
+</pre>
+</body>
+</html>
