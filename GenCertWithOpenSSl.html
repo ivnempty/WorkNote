@@ -43,5 +43,15 @@
 			</ul>
 		</p>
 	</div>
+	<div>
+		<p>
+			<b>Convert a PFX to a seperate .key/.crt file</b><br />
+			<ol>
+				<li>Install OpenSSL</li>
+				<li>Generate .crt file with: <span style="background-color:lightgrey;">penssl pkcs12 -in input.pfx -clcerts -nokeys -out output.cer</span></li>
+				<li>Generate .key file with: <span style="background-color:lightgrey;">openssl pkcs12 -in input.pfx -nocerts -nodes  -out output.key</span></li>
+			</ol>
+		</p>
+	</div>
 </body>
 </html>
